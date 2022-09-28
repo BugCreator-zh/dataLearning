@@ -1,17 +1,16 @@
 import torch
 from torch import nn
-from d2l import torch as d2l
+import d2l
 from torchvision import datasets,transforms
 from torch.utils.data import DataLoader,Dataset,TensorDataset
-
 import tool
 from tool import evaluate_accuracy
 # 读取数据
-batch_size = 256
-train_dataset = datasets.MNIST(root='..//data',train=True,transform=transforms.ToTensor(),download=True)
-test_datatest = datasets.MNIST(root='..//data',train=False,transform=transforms.ToTensor(),download=True)
-train_iter = DataLoader(dataset=train_dataset,batch_size=batch_size,shuffle=True)
-test_iter = DataLoader(dataset=test_datatest,batch_size=batch_size,shuffle=True)
+#batch_size = 256
+#train_dataset = datasets.MNIST(root='..//data',train=True,transform=transforms.ToTensor(),download=True)
+#test_datatest = datasets.MNIST(root='..//data',train=False,transform=transforms.ToTensor(),download=True)
+#train_iter = DataLoader(dataset=train_dataset,batch_size=batch_size,shuffle=True)
+#test_iter = DataLoader(dataset=test_datatest,batch_size=batch_size,shuffle=True)
 
 # 网络
 class LeNet(nn.Module):
@@ -57,12 +56,13 @@ def train(net,train_iter,test_iter,num_epochs,lr,device):
                 metric.add(l*X.shape[0],tool.accuracy(y_pred,y),X.shape[0])
         train_l.append(metric[0]/metric[2])
         train_acc.append(metric[1]/metric[2])
-        test_acc.append(evaluate_accuracy(net,test_iter))
+        test_acc.append(evaluate_accuracy(net,test_iter,device))
         print(f'loss:{train_l[-1]}   train_acc:{train_acc[-1]}   test_acc:{test_acc[-1]}')
     tool.pplt(list(range(1,num_epochs+1)),[train_l,train_acc,test_acc],xlabel='epoch',
               legend=['train_loss','train_acc','test_acc'],title='number')
 
-
+batch_size = 128
+train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size)
 net = LeNet()
 num_epochs,lr,device = 10,0.9,'cuda'
 train(net,lr=lr,train_iter=train_iter,test_iter = test_iter,num_epochs=num_epochs,device=device)

@@ -1,7 +1,5 @@
 import torch
 from torch import nn
-import d2l
-import tool
 
 # AlexNet
 class AlexNet(nn.Module):
