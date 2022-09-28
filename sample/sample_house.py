@@ -12,7 +12,7 @@ from tool import pplt,get_kfold_data
 import time
 
 
-def download(name, cache_dir=os.path.join('..', 'data')):
+def download(name, cache_dir=os.path.join('../..', 'data')):
     assert name in DATA_HUB, f"{name} doesn't exit in {DATA_HUB}"
     url, shal_hash = DATA_HUB[name]
     os.makedirs(cache_dir, exist_ok=True)
