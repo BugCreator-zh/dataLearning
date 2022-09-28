@@ -9,6 +9,8 @@ from torch import nn
 from torch.utils.data import TensorDataset, DataLoader, Dataset
 from matplotlib import pyplot as plt
 from tool import pplt,get_kfold_data
+import time
+
 
 def download(name, cache_dir=os.path.join('..', 'data')):
     assert name in DATA_HUB, f"{name} doesn't exit in {DATA_HUB}"
@@ -63,14 +65,16 @@ all_features[numeric_features] = all_features[numeric_features].apply(
 all_features[numeric_features] = all_features[numeric_features].fillna(0)
 
 all_features = pd.get_dummies(all_features, dummy_na=True)
-train_features = torch.tensor(all_features[:train_data.shape[0]].values, dtype=torch.float32)
-test_features = torch.tensor(all_features[train_data.shape[0]:].values, dtype=torch.float32)
-train_labels = torch.tensor(train_data.SalePrice.values.reshape(-1, 1), dtype=torch.float32)
+train_features = torch.tensor(all_features[:train_data.shape[0]].values, dtype=torch.float32,device='cuda')
+test_features = torch.tensor(all_features[train_data.shape[0]:].values, dtype=torch.float32,device='cuda')
+train_labels = torch.tensor(train_data.SalePrice.values.reshape(-1, 1), dtype=torch.float32,device='cuda')
 
 # net
 in_features = train_features.shape[1]
-net = nn.Sequential(nn.Linear(in_features, 1))
-
+net = nn.Sequential(nn.Linear(in_features, in_features//2),
+                    nn.ReLU(),
+                    nn.Linear(in_features//2,1))
+net = net.to(torch.device('cuda'))
 # train
 loss = nn.MSELoss()
 
@@ -109,8 +113,7 @@ def k_fold(k, X_train, y_train, num_epochs, learning_rate, weight_decay, batch_s
         train_ls, valid_ls = train(net, *data, num_epochs, learning_rate, weight_decay, batch_size)
         train_l_sum += train_ls[-1]
         valid_l_sum += valid_ls[-1]
-        if i == 0:
-            pplt(list(range(1,num_epochs+1)),[train_ls,valid_ls],legend=['train_ls','valid_ls'],xlabel ='epoch',ylabel='loss',title='loss-change')
+        #pplt(list(range(1,num_epochs+1)),[train_ls,valid_ls],legend=['train_ls','valid_ls'],xlabel ='epoch',ylabel='loss',title='loss-change')
         print(f'折{i + 1},训练log_rmse{float(train_ls[-1])}',
               f'验证log_rmse{float(valid_ls[-1])}')
     return train_l_sum / k, valid_l_sum / k
@@ -128,8 +131,11 @@ def train_and_pred(train_features, test_features, train_labels, test_data,
     submission = pd.concat([test_data['Id'], test_data['SalePrice']], axis=1)
     submission.to_csv('submission.csv', index=False)
 
-
-k, num_epochs, lr, weight_decay, batch_size = 5, 100, 5, 0, 64
+a = time.time()
+k, num_epochs, lr, weight_decay, batch_size = 5, 100, 0.5, 0.2, 64
 k_fold(k,train_features,train_labels,num_epochs,lr,weight_decay,batch_size)
+b = time.time()
+print(b-a)
 #train_and_pred(train_features, test_features, train_labels, test_data,
 #num_epochs, lr, weight_decay, batch_size)
+
