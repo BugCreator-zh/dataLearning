@@ -25,13 +25,14 @@ class VGG(nn.Module):
 
     def make_layer(self,vgg):
         layers = []
-        in_channel = 1
+        in_channel = 3
         for conv in self.conv_layer[vgg]:
             if conv == 'p':
                 layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
                 continue
 
             layers.append(nn.Conv2d(in_channel, conv, kernel_size=3, padding=1))
+            layers.append(nn.BatchNorm2d(conv))
             layers.append(nn.ReLU())
             in_channel = conv
         return nn.Sequential(*layers)
@@ -71,3 +72,9 @@ def train(net,train_iter, test_iter,num_epochs,lr,device):
         print(f'loss:{train_l[-1]}   train_acc:{train_acc[-1]}   test_acc:{test_acc[-1]}')
     tool.pplt(list(range(1,num_epochs+1)),[train_l,train_acc,test_acc],xlabel='epoch',
               legend=['train_loss','train_acc','test_acc'],title='number')
+
+
+train_iter,test_iter = d2l.load_data_fashion_mnist(128,resize=224)
+lr,num_epochs,device = 0.01,10,'cuda'
+net = VGG('vgg_11')
+train(net,train_iter,test_iter,num_epochs,lr,device)
